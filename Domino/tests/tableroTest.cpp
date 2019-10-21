@@ -6,7 +6,7 @@
 TEST_CASE("Constructor"){
     Tablero t;
     SUBCASE("The board is empty")
-        __compar_d_fn_t (t.estaVacio());
+        CHECK(t.estaVacio());
 }
 
 TEST_CASE("Place tile to the left"){
