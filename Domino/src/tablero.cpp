@@ -1,44 +1,37 @@
 #include "tablero.hpp"
 #include "ficha.hpp"
-#include<list>
+#include <list>
 
-
-bool Tablero::ponerFichaIzq(Ficha &f){
-    if(estaVacio()){
+bool Tablero::ponerFichaIzq(const Ficha& f)
+{
+    if (estaVacio()) {
         _fichas.push_front(f);
         return true;
     }
-    if(getExtremoIzquierdo() == f.getN2()){
+    if (getExtremoIzquierdo() == f.getN2()) {
         _fichas.push_front(f);
         return true;
-    }
-    else if(getExtremoIzquierdo() == f.getN1()){
-        f.rotar();
-        _fichas.push_front(f);
+    } else if (getExtremoIzquierdo() == f.getN1()) {
+        _fichas.push_front(f.rotar());
         return true;
-    }
-    else{
+    } else {
         return false;
     }
-    
 }
 
-bool Tablero::ponerFichaDer(Ficha &f){
-    if(estaVacio()){
+bool Tablero::ponerFichaDer(const Ficha& f)
+{
+    if (estaVacio()) {
         _fichas.push_back(f);
         return true;
     }
-    if(getExtremoDerecho() == f.getN1()){
+    if (getExtremoDerecho() == f.getN1()) {
         _fichas.push_back(f);
         return true;
-    }
-    else if(getExtremoDerecho() == f.getN2()){
-        f.rotar();
-        _fichas.push_back(f);
+    } else if (getExtremoDerecho() == f.getN2()) {
+        _fichas.push_back(f.rotar());
         return true;
-    }
-    else{
+    } else {
         return false;
     }
-    
 }

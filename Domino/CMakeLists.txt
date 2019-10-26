@@ -13,11 +13,11 @@ foreach(FILE ${FILES})
     list(APPEND SRC src/${FILE}.cpp)
 endforeach(FILE)
 
-add_library(sources OBJECT ${SRC} src/partida.cpp)
+add_library(sources OBJECT ${SRC} src/partida.cpp )
 
 foreach(FILE ${FILES})
     add_executable(${FILE}Test tests/${FILE}Test.cpp $<TARGET_OBJECTS:sources>)
     add_test(${FILE}Test ${FILE}Test)
 endforeach(FILE)
 
-add_executable(server src/main.cpp server/server.cpp)
+add_executable(server src/main.cpp server/server.cpp $<TARGET_OBJECTS:sources>)
