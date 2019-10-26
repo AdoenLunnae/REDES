@@ -8,16 +8,27 @@ int main()
     signal(SIGINT, handleSigint);
     char buffer[100];
     int max;
+    std::vector<User> lookingForMatch;
     server.startListening();
     while (1) {
+        lookingForMatch.clear();
         max = server.recreateFDSet();
         pselect(max + 1, &server.readset_, NULL, NULL, &server.timeout_, NULL);
         for (auto i = server.clientBegin(); i != server.clientEnd(); ++i) {
-            if (FD_ISSET(*i, &server.readset_)) {
-                if ((recv(*i, &buffer, 100, 0) > 0))
+            if (FD_ISSET(i->fd, &server.readset_)) {
+                if ((recv(i->fd, &buffer, 100, 0) > 0))
                     server.handleMessage(i, buffer);
                 else
                     server.handleDisconnection(i);
+            }
+            if (i->lookingForMatch) {
+                lookingForMatch.push_back(*i);
+            }
+        }
+        for (auto i = lookingForMatch.begin(); i != lookingForMatch.end(); ++i) {
+            if (i + 1 != lookingForMatch.end()) {
+                server.createMatch(*i, *(i + 1));
+                ++i;
             }
         }
 
@@ -29,6 +40,8 @@ int main()
 
 void handleSigint(int sig)
 {
+    for (auto i = server.clientBegin(); i != server.clientEnd(); ++i)
+        server.handleDisconnection(i);
     delete &server;
     exit(1);
 }
