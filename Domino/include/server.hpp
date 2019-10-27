@@ -16,22 +16,29 @@
 
 using std::cout;
 using std::vector;
-
+struct Matchmaking;
 typedef struct {
     int fd;
     std::string introducedUsername = "";
     bool loggedIn = false;
     bool lookingForMatch = false;
-    Partida* playing = NULL;
+    struct Matchmaking* playing = NULL;
     bool isPlayer1 = false;
 } User;
+
+typedef struct Matchmaking {
+    User* j1;
+    User* j2;
+    Partida* match;
+    bool requiresUpdate;
+} Matchmaking;
 
 class Server {
 private:
     struct sockaddr_in sockname_, newClient_;
     struct hostent* host_;
     int clientCap_;
-    std::list<Partida> partidasActivas_;
+    std::vector<Matchmaking> partidasActivas_;
     char buffer_[100];
     vector<User> clients_;
 
@@ -77,11 +84,14 @@ public:
 
     bool createMatch(User& j1, User& j2)
     {
-        partidasActivas_.emplace_front();
+        partidasActivas_.push_back({ &j1, &j2, new Partida });
         j1.lookingForMatch = false;
         j2.lookingForMatch = false;
         j1.isPlayer1 = true;
         j1.isPlayer1 = false;
+        j1.playing = &partidasActivas_.back();
+        j2.playing = &partidasActivas_.back();
+        partidasActivas_.back().match->start();
     }
 
     vector<User>::iterator clientBegin()

@@ -88,12 +88,12 @@ bool Server::checkLogged(const User& client, const bool shouldBeLogged)
 bool Server::checkPlaying(const User& client, const bool shouldBePlaying)
 {
     if (shouldBePlaying && !(client.playing != NULL)) {
-        sprintf(buffer_, "-Err. No estás logeado");
+        sprintf(buffer_, "-Err. No estás jugando");
         send(client.fd, buffer_, sizeof(buffer_), 0);
         return false;
     }
     if (!shouldBePlaying && (client.playing != NULL)) {
-        sprintf(buffer_, "-Err. Ya estás logeado");
+        sprintf(buffer_, "-Err. Ya estás jugando");
         send(client.fd, buffer_, sizeof(buffer_), 0);
         return false;
     }
@@ -102,20 +102,18 @@ bool Server::checkPlaying(const User& client, const bool shouldBePlaying)
 
 bool Server::checkTurn(const User& client)
 {
-    if (!checkPlaying(client, true)) {
+    bool correct = (client.isPlayer1 ^ client.playing->match->isTurnJ1());
+    if (!correct) {
         sprintf(buffer_, "-Err. No es tu turno");
         send(client.fd, buffer_, sizeof(buffer_), 0);
-        return false;
     }
-    return (!(client.isPlayer1 ^ client.playing->isTurnJ1()));
+    return correct;
 }
 
 bool Server::handleMessage(vector<User>::iterator clientIndex, const char* message)
 {
     /*
     REGISTER –u  usuario –p  password –d  Nombre  y  Apellidos –c  Ciudad:  mensaje mediante  el  cual  el  usuario  solicita  registrarse  para  acceder  al  servicio de  chat  que escucha en el puerto TCP  2050.
-    PASO-TURNO: mensaje para indicar que no se dispone de ninguna ficha para colocar en ese turno.
-    INICIAR-PARTIDA: mensaje para indicar el interés en jugar una partida de dominó.
     COLOCAR-FICHA |valor1|valor2|,extremo:  mensaje  para  colocar  una  ficha  en  el tablero.
     -> Del servidor: FICHAS |valor1|valor2||...||: mensaje para enviar las fichas de un jugador.
     -> Del servidor: TABLERO |valor1|valor2||...||: mensaje para enviar el tablero de la partida.
@@ -169,8 +167,8 @@ bool Server::handleMessage(vector<User>::iterator clientIndex, const char* messa
         send(clientIndex->fd, buffer_, sizeof(buffer_), 0);
     } else if (command == "PASO-TURNO") {
         if (checkLogged(*clientIndex, true) && checkPlaying(*clientIndex, true) && checkTurn(*clientIndex)) {
-            if (clientIndex->playing->canPlay(clientIndex->isPlayer1))
-                clientIndex->playing->changeTurn();
+            if (clientIndex->playing->match->canPlay(clientIndex->isPlayer1))
+                clientIndex->playing->match->changeTurn();
         }
     } else if (command == "COLOCAR-FICHA") {
         if (checkLogged(*clientIndex, true) && checkPlaying(*clientIndex, true) && checkTurn(*clientIndex)) {
@@ -181,14 +179,13 @@ bool Server::handleMessage(vector<User>::iterator clientIndex, const char* messa
             sscanf(fichaStr.c_str(), "|%d|%d|\n", &n1, &n2);
             try {
                 if (extremo == "izq") {
-                    clientIndex->playing->jugarFicha(Ficha(n1, n2), false);
-                    std::string board = clientIndex->playing->showBoard();
+                    clientIndex->playing->match->jugarFicha(Ficha(n1, n2), false, clientIndex->isPlayer1);
+                    std::string board = clientIndex->playing->match->showBoard();
                     sprintf(buffer_, "+Ok. Ficha jugada\nTABLERO %s", board.c_str());
                     correct = true;
                 } else if (extremo == "der") {
-                    clientIndex->playing->jugarFicha(Ficha(n1, n2), true);
-                    std::string board = clientIndex->playing->showBoard();
-                    sprintf(buffer_, "+Ok. Ficha jugada\nTABLERO %s", board.c_str());
+                    clientIndex->playing->match->jugarFicha(Ficha(n1, n2), true, clientIndex->isPlayer1);
+                    sprintf(buffer_, "+Ok. Ficha jugada\n");
                     correct = true;
                 } else {
                     sprintf(buffer_, "-Err. Formato incorrecto");
@@ -197,7 +194,12 @@ bool Server::handleMessage(vector<User>::iterator clientIndex, const char* messa
                 sprintf(buffer_, "-Err. La ficha es invalida");
             }
             send(clientIndex->fd, buffer_, sizeof(buffer_), 0);
+            return correct;
         }
+    } else {
+        sprintf(buffer_, "-Err. Comando no reconocido");
+        send(clientIndex->fd, buffer_, sizeof(buffer_), 0);
+        return false;
     }
 }
 

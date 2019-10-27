@@ -3,7 +3,7 @@
 #include "jugador.hpp"
 #include <vector>
 
-bool Partida::canPlay(bool isJ1)
+bool Partida::canPlay(bool isJ1) const
 {
     Jugador j = isJ1 ? _j1 : _j2;
     std::vector<Ficha> mano = j.getMano();
@@ -15,7 +15,7 @@ bool Partida::canPlay(bool isJ1)
     return false;
 }
 
-bool Partida::jugarFicha(const Ficha& f1, const bool extemoDerecho)
+bool Partida::jugarFicha(const Ficha& f1, const bool extemoDerecho, const bool player1)
 {
     return true;
 }
