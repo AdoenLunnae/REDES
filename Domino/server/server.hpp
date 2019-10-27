@@ -19,7 +19,7 @@ using std::vector;
 struct Matchmaking;
 typedef struct {
     int fd;
-    std::string introducedUsername = "";
+    std::string username = "";
     bool loggedIn = false;
     bool lookingForMatch = false;
     struct Matchmaking* playing = NULL;
@@ -32,14 +32,16 @@ typedef struct Matchmaking {
     Partida* match;
     bool requiresUpdate;
 } Matchmaking;
+bool operator==(const Matchmaking& m1, const Matchmaking& m2);
 
 class Server {
 private:
     struct sockaddr_in sockname_, newClient_;
     struct hostent* host_;
     int clientCap_;
-    std::vector<Matchmaking> partidasActivas_;
-    char buffer_[100];
+    int matchCap_;
+    std::list<Matchmaking> partidasActivas_;
+    char buffer_[250];
     vector<User> clients_;
 
     int newSd_;
@@ -50,7 +52,7 @@ public:
     timespec timeout_{ 3, 0 };
     int sd_;
 
-    Server(sa_family_t family, const int port, int clientCap);
+    Server(sa_family_t family, const int port, int clientCap, int matchCap);
     ~Server()
     {
         close(sd_);
@@ -82,23 +84,20 @@ public:
 
     bool handleDisconnection(vector<User>::iterator& clientIndex);
 
-    bool createMatch(User& j1, User& j2)
-    {
-        partidasActivas_.push_back({ &j1, &j2, new Partida });
-        j1.lookingForMatch = false;
-        j2.lookingForMatch = false;
-        j1.isPlayer1 = true;
-        j1.isPlayer1 = false;
-        j1.playing = &partidasActivas_.back();
-        j2.playing = &partidasActivas_.back();
-        partidasActivas_.back().match->start();
-    }
+    void sendUpdate(Matchmaking& m);
 
-    vector<User>::iterator clientBegin()
-    {
-        return clients_.begin();
-    }
-    vector<User>::iterator clientEnd() { return clients_.end(); }
+    void endMatch(Matchmaking* m);
+
+    void createMatch(User& j1, User& j2);
+
+    inline vector<User>::iterator clientBegin() { return clients_.begin(); }
+    inline vector<User>::iterator clientEnd() { return clients_.end(); }
+
+    inline std::list<Matchmaking>::iterator matchBegin() { return partidasActivas_.begin(); }
+    inline std::list<Matchmaking>::iterator matchEnd() { return partidasActivas_.end(); }
+
+    bool isFull() const { return (clients_.size() == clientCap_); }
+    bool fullMatches() const { return partidasActivas_.size() == matchCap_; }
 
     int recreateFDSet()
     {

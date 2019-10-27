@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.0)
 
 project(Domino VERSION 0.1.0)
 
-include_directories(include/)
+include_directories(include/ server/)
 
 include(CTest)
 enable_testing()
@@ -20,4 +20,5 @@ foreach(FILE ${FILES})
     add_test(${FILE}Test ${FILE}Test)
 endforeach(FILE)
 
-add_executable(server src/main.cpp server/server.cpp $<TARGET_OBJECTS:sources>)
+add_executable(servidor src/servidor.cpp server/server.cpp $<TARGET_OBJECTS:sources>)
+add_executable(cliente src/cliente.cpp)

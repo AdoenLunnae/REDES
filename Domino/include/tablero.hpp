@@ -25,6 +25,7 @@ public:
 
     inline bool estaVacio() const { return (_fichas.empty()); }
     inline int getNumFichas() const { return (_fichas.size()); }
+    inline std::list<Ficha> getFichas() const { return _fichas; }
     std::string toString() const
     {
         std::stringstream ss;

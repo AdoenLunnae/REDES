@@ -15,7 +15,9 @@ public:
         _n1 = n1;
         _n2 = n2;
     }
-
+    inline Ficha()
+        : _n1(-1)
+        , _n2(-1){};
     inline int getN2() const { return _n2; }
     inline int getN1() const { return _n1; }
     inline bool operator==(const Ficha& f) const
